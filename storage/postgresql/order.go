@@ -556,3 +556,45 @@ func (r *orderRepo) RemoveOrderItem(ctx context.Context, req *models.OrderItemPr
 
 	return nil
 }
+
+func (r *orderRepo) Check(ctx context.Context, req *models.CreateOrderItem) error {
+	var quantity, store_id int
+
+	if req.Quantity <= 0 {
+		return errors.New("Invalid quantity")
+	}
+
+	query := `
+		SELECT 
+    		COALESCE(quantity, 0),
+			COALESCE(store_id, 0)
+		FROM stocks
+		WHERE product_id = $1 AND store_id = (
+    		SELECT
+        		store_id
+    		FROM orders
+   	 		WHERE order_id =$2
+		)
+	`
+
+	err := r.db.QueryRow(ctx, query, req.ProductId, req.OrderId).Scan(&quantity, &store_id)
+	if err != nil {
+		return errors.New("Product is not found")
+	}
+
+	if quantity < req.Quantity {
+		return errors.New("There is not enough of this product")
+	}
+
+	_, err = r.db.Exec(ctx,
+		`UPDATE stocks SET quantity = quantity - $1 WHERE store_id = $2 AND product_id = $3`,
+		req.Quantity,
+		store_id,
+		req.ProductId,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

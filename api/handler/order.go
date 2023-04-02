@@ -283,6 +283,12 @@ func (h *Handler) CreateOrderItem(c *gin.Context) {
 		return
 	}
 
+	err = h.storages.Order().Check(context.Background(), &createOrderItem)
+	if err != nil {
+		h.handlerResponse(c, "Check stock", http.StatusBadRequest, err.Error())
+		return
+	}
+
 	err = h.storages.Order().AddOrderItem(context.Background(), &createOrderItem)
 	if err != nil {
 		h.handlerResponse(c, "storage.order.create", http.StatusInternalServerError, err.Error())

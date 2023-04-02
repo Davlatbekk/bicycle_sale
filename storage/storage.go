@@ -89,6 +89,7 @@ type OrderRepoI interface {
 	AddOrderItem(ctx context.Context, req *models.CreateOrderItem) error
 	RemoveOrderItem(ctx context.Context, req *models.OrderItemPrimaryKey) error
 	OrderTotalSum(ctx context.Context, req *models.OrderTotalSum) (string, error)
+	Check(ctx context.Context, req *models.CreateOrderItem) error
 }
 
 type CodeRepoI interface {
